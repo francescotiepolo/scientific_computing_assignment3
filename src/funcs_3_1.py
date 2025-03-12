@@ -39,3 +39,28 @@ def M_matrix_rectangle(Nx, Ny):
     M = (sp.kron(I_y, A_x) + sp.kron(A_y, I_x)).tolil() # Generate matrix M joining A_x's and I_y's and viceversa
     M.setdiag(-4)  # Ensure diagonal entries are -4
     return M.tocsr()
+
+def M_matrix_circle(N, L):
+    ''' Construct the matrix M for the 2D wave equation for a circular domain.
+    Input:
+        N: int, steps in diameter.
+    Output:
+        M: scipy.sparse.csr_matrix, matrix M.
+    '''
+    h = L / (N + 1) # Step size
+    x = np.linspace(0, L - h, N) # Grid points x-axis
+    y = np.linspace(0, L - h, N) # Grid points y-axis
+    X, Y = np.meshgrid(x, y)
+
+    M = M_matrix_square(N) # Generate matrix M for square domain
+    M = M.tolil() # Convert to lil format for modification
+
+    R = L / 2 # Radius of circle
+    not_circle = ((X - R)**2 + (Y - R)**2) > R**2 # Points outside circle
+
+    for k, v in enumerate(not_circle.flatten()): # Find points outside circle and set corresponding row to zero
+        if v:
+            M[k, :] = 0
+
+    M.setdiag(-4) # Ensure diagonal entries are -4
+    return M.tocsr(), X, Y, not_circle
