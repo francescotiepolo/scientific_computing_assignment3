@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-def draw_matrix(N):
+def M_matrix_square(N):
     ''' Draw the matrix M for the 2D wave equation (A is the diagon matrix is M is viewed as 4 by 4 and built using A and 4 by 4 identity matrix).
     Input:
         N: int, size of the side of the spacial grid.
