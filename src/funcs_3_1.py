@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
+import scipy.linalg
+import time
 
 def M_matrix_square(N):
     ''' Construct the matrix M for the 2D wave equation for a square domain.
@@ -64,3 +66,31 @@ def M_matrix_circle(N, L):
 
     M.setdiag(-4) # Ensure diagonal entries are -4
     return M.tocsr(), X, Y, not_circle
+
+def measure_time(N, runs=10):
+    time_dense=[]
+    time_sparse=[]
+
+    for _ in range(runs):
+        M = M_matrix_square(N)
+        M_dense = M.toarray()
+
+        start = time.time()
+        scipy.linalg.eigh(M_dense)
+        time_dense.append(time.time() - start)
+
+        start = time.time()
+        sp.linalg.eigs(M)
+        time_sparse.append(time.time() - start)
+    
+    return {'dense mean': np.mean(time_dense),
+            'dense ci': 1.96 * np.std(time_dense, ddof=1) / np.sqrt(runs),
+            'sparse mean': np.mean(time_sparse),
+            'sparse ci': 1.96 * np.std(time_sparse, ddof=1) / np.sqrt(runs)}
+
+def compute_freq(N, L, f=10):
+    h = L / (N + 1)
+    M = M_matrix_square(N)
+    eigenvalues, _ = sp.linalg.eigs(M, k=f)
+    frequencies = np.sqrt(np.abs(eigenvalues)/h)
+    return np.sort(frequencies)
