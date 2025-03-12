@@ -92,5 +92,5 @@ def compute_freq(N, L, f=10):
     h = L / (N + 1)
     M = M_matrix_square(N)
     eigenvalues, _ = sp.linalg.eigs(M, k=f)
-    frequencies = np.sqrt(np.abs(eigenvalues)/h)
+    frequencies = np.sqrt(np.abs(eigenvalues)) / h
     return np.sort(frequencies)
