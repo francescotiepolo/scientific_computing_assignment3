@@ -50,8 +50,8 @@ def M_matrix_circle(N, L):
         M: scipy.sparse.csr_matrix, matrix M.
     '''
     h = L / (N + 1) # Step size
-    x = np.linspace(0, L - h, N) # Grid points x-axis
-    y = np.linspace(0, L - h, N) # Grid points y-axis
+    x = np.linspace(0, L, N) # Grid points x-axis
+    y = np.linspace(0, L, N) # Grid points y-axis
     X, Y = np.meshgrid(x, y)
 
     M = M_matrix_square(N) # Generate matrix M for square domain
@@ -66,6 +66,26 @@ def M_matrix_circle(N, L):
 
     M.setdiag(-4) # Ensure diagonal entries are -4
     return M.tocsr(), X, Y, not_circle
+
+def obtain_sort_solutions(M, n=3):
+    eigvals, eigvecs = scipy.linalg.eigh(M) # Solve the eigenvalue problem
+    # Sort eigenvalues/eigenvectors
+    idx = np.argsort(eigvals)
+    eigvals = eigvals[idx]
+    eigvecs = eigvecs[:, idx]
+    # Choose solutions with negative eigenvalues and the n closest to zero
+    neg_indices = np.where(eigvals < 0)[0]
+    lowest_sols = neg_indices[-n:]
+    return eigvals, eigvecs, lowest_sols
+
+def min_max_values(eigvecs, lowest_modes, Nx, Ny):
+    global_min = np.inf
+    global_max = -np.inf
+    for i in lowest_modes:
+        sol = eigvecs[:, i].reshape(Ny, Nx)
+        global_min = min(global_min, sol.min())
+        global_max = max(global_max, sol.max())
+    return global_min, global_max
 
 def measure_time(N, runs=10):
     time_dense=[]
@@ -88,9 +108,9 @@ def measure_time(N, runs=10):
             'sparse mean': np.mean(time_sparse),
             'sparse ci': 1.96 * np.std(time_sparse, ddof=1) / np.sqrt(runs)}
 
-def compute_freq(N, L, f=10):
+def compute_freq(N, L, k=10):
     h = L / (N + 1)
     M = M_matrix_square(N)
-    eigenvalues, _ = sp.linalg.eigs(M, k=f)
+    eigenvalues, _ = sp.linalg.eigs(M, k)
     frequencies = np.sqrt(np.abs(eigenvalues)) / h
     return np.sort(frequencies)
